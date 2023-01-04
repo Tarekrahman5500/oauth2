@@ -10,7 +10,7 @@ import 'dotenv/config'
 const app = express();
 
 const port = process.env.PORT || 5000
-import indexRouter from './routes/index'
+import uploadRouter from './routes/upload'
 import usersRouter from './routes/users'
 import mongoose from "mongoose";
 app.use(cors())
@@ -39,7 +39,7 @@ app.use(express.static(path.join(__dirname, 'public')));
     }
 })().catch(console.dir)
 
-app.use('/', indexRouter);
+app.use('/image', uploadRouter);
 app.use('/users', usersRouter);
 
 app.listen(port, () => {

@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken'
 const router = express.Router();
 import sendEmail from '../controllers/sendmail'
 import auth from '../controllers/auth'
-
+import authAdmin from '../controllers/authAdmin'
 // de structure the files
 const {ACTIVATION_TOKEN_SECRET, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, CLIENT_URL} = process.env
 
@@ -140,9 +140,9 @@ router.post('/reset', auth, async (req, res) => {
         // after auth the user get pass and hash it
         const {password} = req.body
         const passwordHash = await bcrypt.hash(password, 16)
-       // console.log(req.user)
+        // console.log(req.user)
         // update pass
-        await User.findOneAndUpdate({_id: req.user.id},{
+        await User.findOneAndUpdate({_id: req.user.id}, {
             password: passwordHash,
         })
         return res.status(200).json({message: `Your password has been updated`})
@@ -151,6 +151,81 @@ router.post('/reset', auth, async (req, res) => {
     }
 })
 
+// get a user info
+router.get('/info', auth, async (req, res) => {
+    try {
+        // find a single user
+        const user = await User.findById(req.user.id).select('-password')
+        return res.status(200).json({user})
+    } catch (err) {
+        return res.status(500).json({error: err.message});
+    }
+})
+
+// get all user info
+router.get('/all_info', auth, authAdmin, async (req, res) => {
+    try {
+        // find all user without pass
+        const user = await User.find().select('-password')
+        return res.status(200).json({user})
+    } catch (err) {
+        return res.status(500).json({error: err.message});
+    }
+})
+
+//logout
+router.get('/logout', async (req, res) => {
+    try {
+        res.clearCookie('refresh_token', {path: 'users/refresh_token'})
+        return res.status(200).json({message: 'Successfully logged out'})
+    } catch (err) {
+        return res.status(500).json({error: err.message});
+    }
+})
+// update user info
+router.patch('/update', auth, async (req, res) => {
+    try {
+        const {name, avatar} = req.body
+        // find the user
+        await User.findOneAndUpdate({_id: req.user.id}, {name, avatar})
+        return res.status(200).json({message: 'Successfully Update'})
+    } catch (err) {
+        return res.status(500).json({error: err.message});
+    }
+})
+//update all by admin
+
+router.patch('/update_role/:id', auth, authAdmin, async (req, res) => {
+    try {
+        const {role} = req.body
+        // find the user
+        await User.findOneAndUpdate({_id: req.params.id}, {role})
+        return res.status(200).json({message: 'Successfully Update'})
+    } catch (err) {
+        return res.status(500).json({error: err.message});
+    }
+})
+
+//delete account by user
+router.delete('/delete', auth, async (req, res) => {
+    try {
+        // find the user
+        await User.findByIdAndDelete({_id: req.user.id})
+        return res.status(200).json({message: 'Successfully Delete'})
+    } catch (err) {
+        return res.status(500).json({error: err.message});
+    }
+})
+
+// delete by admin
+router.delete('delete/:id', auth, authAdmin, async (req, res) => {
+    try {
+        await User.findByIdAndDelete({_id: req.params.id})
+        return res.status(200).json({message: 'Successfully Delete'})
+    } catch (err) {
+        return res.status(500).json({error: err.message});
+    }
+})
 // check valid mail
 const validateEmail = (email) => {
     return email.match(
