@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
-import {Link} from "react-router-dom";
+import {Link,useNavigate} from "react-router-dom";
 import axios from "axios";
 import {showErrMsg, showSuccessMsg} from '../../utils/notification/Notifications'
+import {dispatchLogin} from '../../../redux/actions/authAction'
+import {useDispatch} from 'react-redux'
 const initialState = {
     email: '',
     password: '',
@@ -12,6 +14,8 @@ const initialState = {
 
 const Login = () => {
     const [user, setUser] = useState(initialState)
+    const dispatch = useDispatch()
+    const history = useNavigate()
     const {email, password, err, success} = user
     const handleChangeInput = e => {
         const {name, value} = e.target
@@ -24,6 +28,8 @@ const Login = () => {
             const res = await axios.post(`http://localhost:5000/users/login`, {email, password})
              setUser({...user, err: '', success: res.data.message})
             localStorage.setItem('firstLogin', true)
+            dispatch(dispatchLogin())
+            history("/")
             console.log(res)
         } catch (err) {
             err.response.data.message &&
@@ -52,6 +58,7 @@ const Login = () => {
                     <Link to="/forgot_password">Forgot your password</Link>
                 </div>
             </form>
+             <p>New User?<Link to="/register">Sign UP</Link></p>
         </div>
     );
 };
